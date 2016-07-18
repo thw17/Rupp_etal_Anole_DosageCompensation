@@ -1,4 +1,6 @@
 # Anole X/A diversity analyses from Rupp et al.
+##CURRENTLY UNDER CONSTRUCTION (7/17/2016)
+
 This repository contains scripts and information related to the genetic diversity analyses in Rupp et al (_In review_). Evolution of dosage compensation in _Anolis carolinensis_, a reptile with XX/XY chromosomal sex determination.  Scripts related to other parts of the study (e.g. identifying X-linked scaffolds, differential expression analyses, and Ka/Ks calculations) can be found in [another repository](https://github.com/WilsonSayresLab/Anole_expression).
 
 ##Data and samples
@@ -50,6 +52,37 @@ done
 At about 30 minutes per accession (time it took on my machine), the above command would take somewhere around 10 hours to complete.  Alternatively, this can be sped up by splitting the command up into multiple scripts to be run in parallel (e.g., with 2-5 accession numbers at a time).
 
 ##Transcriptome Assembly and Variant Calling
+
+Transcriptome assembly and variant calling more or less followed the [GATK Best Practices workflow for RNA-seq data](https://www.broadinstitute.org/gatk/guide/article?id=3891) using the following tools:
+
+[STAR](https://github.com/alexdobin/STAR)
+[samtools](http://www.htslib.org/)
+[Picard](https://broadinstitute.github.io/picard/)
+[Genome Analysis Toolkit (GATK)](https://www.broadinstitute.org/gatk/)
+
+####First pass read mapping with STAR
+We used STAR's 2-pass method to map reads.  Assuming the genome ([AnoCar2](http://hgdownload.cse.ucsc.edu/goldenPath/anoCar2/bigZips/)) has been downloaded and properly indexed, the first pass with STAR is relatively straightforward.  We used the following template command line (run for each sample):
+
+```
+STAR=/path/to/STAR
+refdir=/path/to/reference/genome
+fastqdir=/path/to/fastq/directory
+sampleSRA=SRAaccessionForSample
+numthread=NumberofThreads
+outdir=/path/to/outdir
+
+$STAR --genomeDir $refdir --readFilesIn "$fastqdir""$sampleSRA"_1.fastq "fastqdir""$sampleSRA"_2.fastq --runThreadN $numthread --outFileNamePrefix "$outdir""$sampleSRA"_
+```
+This step will only take a few minutes per sample and primarily serves to identify potential splice junctions across all samples that will be incorporated in the second pass. 
+
+####Second pass read alignment with STAR
+The second p
+
+####Bam Processing
+
+####Sample variant calling outputting a GVCF
+
+####Joint genotyping all samples
 
 
 ##Calculating bootstrapped X/A diversity ratios
