@@ -47,7 +47,7 @@ do
 fastq-dump --split-files --gzip $i
 done
 ```
-Alternatively, this can be sped up by splitting the command up into multiple scripts to be run in parallel (e.g., with 2-5 accession numbers at a time).
+At about 30 minutes per accession (time it took on my machine), the above command would take somewhere around 10 hours to complete.  Alternatively, this can be sped up by splitting the command up into multiple scripts to be run in parallel (e.g., with 2-5 accession numbers at a time).
 
 ##Transcriptome Assembly and Variant Calling
 
