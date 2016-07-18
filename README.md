@@ -14,7 +14,8 @@ Basic syntax is something like:
 where <sra accession number> is the short read archive number associated with a sample/run.  [Offical documentation](http://www.ncbi.nlm.nih.gov/Traces/sra/sra.cgi?view=toolkit_doc&f=fastq-dump) is a bit minimal, but the Edwards lab put together detailed unoffical documentation [here](https://edwards.sdsu.edu/research/fastq-dump/).
 
 The numbers used in this study, with corresponding sample IDs are:
-| Accession| ID |
+
+| Accession | ID |
 |---|---|
 | SRR1502164 | d15s1 |
 | SRR1502165 | d15s2 |
