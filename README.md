@@ -14,27 +14,28 @@ Basic syntax is something like:
 where <sra accession number> is the short read archive number associated with a sample/run.  [Offical documentation](http://www.ncbi.nlm.nih.gov/Traces/sra/sra.cgi?view=toolkit_doc&f=fastq-dump) is a bit minimal, but the Edwards lab put together detailed unoffical documentation [here](https://edwards.sdsu.edu/research/fastq-dump/).
 
 The numbers used in this study, with corresponding sample IDs are:
-Accession   ID
-SRR1502164  d15s1
-SRR1502165  d15s2
-SRR1502166  d15s3
-SRR1502167  d15s4
-SRR1502168  d15s5
-SRR1502169  d26s1
-SRR1502170  d26s2
-SRR1502171  d26s3
-SRR1502172  d26s4
-SRR1502173  d26s5
-SRR1502174  d47s1
-SRR1502175  d47s2
-SRR1502176  d47s3
-SRR1502177  d47s4
-SRR1502178  d47s5
-SRR1502179  d61s1
-SRR1502180  d61s2
-SRR1502181  d61s3
-SRR1502182  d61s4
-SRR1502183  d61s5
+| Accession| ID |
+|---|---|
+| SRR1502164 | d15s1 |
+| SRR1502165 | d15s2 |
+| SRR1502166 | d15s3 |
+| SRR1502167 | d15s4 |
+| SRR1502168 | d15s5 |
+| SRR1502169 | d26s1 |
+| SRR1502170 | d26s2 |
+| SRR1502171 | d26s3 |
+| SRR1502172 | d26s4 |
+| SRR1502173 | d26s5 |
+| SRR1502174 | d47s1 |
+| SRR1502175 | d47s2 |
+| SRR1502176 | d47s3 |
+| SRR1502177 | d47s4 |
+| SRR1502178 | d47s5 |
+| SRR1502179 | d61s1 |
+| SRR1502180 | d61s2 |
+| SRR1502181 | d61s3 |
+| SRR1502182 | d61s4 |
+| SRR1502183 | d61s5 |
 
 In the sample IDs, the d number is the individual ID and the s number is the biological replicate.  For example, d15s1 corresponds to biological replicate 1 of individual d15.
 
