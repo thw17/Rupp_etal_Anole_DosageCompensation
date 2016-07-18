@@ -3,16 +3,14 @@
 ## Import required modules ##
 #############################
 """ 
-- argparse, collections, csv, re, and sys are part of the standard Python library
-- biopython, numpy, sympy, and cyvcf are easily installed via conda and pip
+- argparse, collections, csv, and sys are part of the standard Python library
+- numpy, sympy, and cyvcf are easily installed via conda and pip
 """
 
 import argparse
 import collections
 import csv
-import re
 import sys
-from Bio import SeqIO
 import numpy as np
 import sympy
 import cyvcf
@@ -165,7 +163,7 @@ for idx,i in enumerate(args.callable_regions):
 ## Functions to calculated diversity and conduct bootstrap resampling ##
 ########################################################################
 
-def pi_overall(tot_diff, k, sequence_length):
+def pi_pairwise(tot_diff, k, sequence_length):
 	""" Calculates mean nucleotide diversity, pi, using equation from Box 1.3 in 
 	Charlesworth and Charleswoth (2010):
 	(tot_diff / (k choose 2)) / sequence_length
@@ -184,7 +182,7 @@ def pi_overall(tot_diff, k, sequence_length):
 		return numerator / float(sequence_length)
 	
 
-def pi_site(allele_count_list):
+def pi_hohenlohe(allele_count_list):
 	"""Function calculates pi from Hohenlohe et al. (2010)
 	
 	pi = 1 - sum((n_i choose 2) / (n choose 2))
@@ -300,9 +298,9 @@ for record in vcf_reader:
 									print "Error reading DP - site excluded"
 					# Process allele list and calculate pi and number of differences
 					if len(allele_list) == male_count + (2 * (total_count - male_count)):
-						pop[3][0].append(pi_overall(count_diffs(allele_list), len(allele_list), 1.0))
+						pop[3][0].append(pi_pairwise(count_diffs(allele_list), len(allele_list), 1.0))
 						allele_count = collections.Counter(allele_list)
-						pop[3][1].append(pi_site([allele_count[x] for x in allele_count]))
+						pop[3][1].append(pi_hohenlohe([allele_count[x] for x in allele_count]))
 			else:
 				for pop in populations:
 					allele_list = []
@@ -318,9 +316,9 @@ for record in vcf_reader:
 							except TypeError:
 								print "Error reading DP - site excluded"
 					if len(allele_list) == total_count * 2:
-						pop[2][0].append(pi_overall(count_diffs(allele_list), len(allele_list), 1.0))
+						pop[2][0].append(pi_pairwise(count_diffs(allele_list), len(allele_list), 1.0))
 						allele_count = collections.Counter(allele_list)
-						pop[2][1].append(pi_site([allele_count[x] for x in allele_count]))
+						pop[2][1].append(pi_hohenlohe([allele_count[x] for x in allele_count]))
 	except KeyError:
 		print "KeyError - site removed for poorly formated INFO"
 		print record
