@@ -7,7 +7,7 @@ The samples for this study consist of RNA-seq data from five biological replicat
 
 ##Obtaining fastq files from SRA
 
-All fastq files are available on SRA (associated with the Hutchins et al. 2014 project; see above) and can be easily downloaded using the [fastq-dump].(http://www.ncbi.nlm.nih.gov/Traces/sra/sra.cgi?view=toolkit_doc&f=fastq-dump) tool, which is part of the [SRA Toolkit].(http://www.ncbi.nlm.nih.gov/Traces/sra/sra.cgi?view=software).
+All fastq files are available on SRA (associated with the Hutchins et al. 2014 project; see above) and can be easily downloaded using the [fastq-dump](http://www.ncbi.nlm.nih.gov/Traces/sra/sra.cgi?view=toolkit_doc&f=fastq-dump) tool, which is part of the [SRA Toolkit](http://www.ncbi.nlm.nih.gov/Traces/sra/sra.cgi?view=software).
 
 Basic syntax is something like:
 ```fastq-dump --splitfiles <sra accession number>```
