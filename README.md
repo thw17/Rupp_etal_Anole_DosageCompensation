@@ -42,7 +42,10 @@ In the sample IDs, the d number is the individual ID and the s number is the bio
 
 A straightforward, but somewhat inefficient way to obtain and compress all of the fastq files might be:
 ```
-for i in SRR1502164 SRR1502165 SRR1502166 SRR1502167 SRR1502168 SRR1502169 SRR1502170 SRR1502171 SRR1502172 SRR1502173 SRR1502174 SRR1502175 SRR1502176 SRR1502177 SRR1502178 SRR1502179 SRR1502180 SRR1502181 SRR1502182 SRR1502183; do fastq-dump --splitfiles --gzip $i; done
+for i in SRR1502164 SRR1502165 SRR1502166 SRR1502167 SRR1502168 SRR1502169 SRR1502170 SRR1502171 SRR1502172 SRR1502173 SRR1502174 SRR1502175 SRR1502176 SRR1502177 SRR1502178 SRR1502179 SRR1502180 SRR1502181 SRR1502182 SRR1502183
+do
+fastq-dump --split-files --gzip $i
+done
 ```
 Alternatively, this can be sped up by splitting the command up into multiple scripts to be run in parallel (e.g., with 2-5 accession numbers at a time).
 
