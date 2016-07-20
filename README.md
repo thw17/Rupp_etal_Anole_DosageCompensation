@@ -55,10 +55,10 @@ At about 30 minutes per accession (time it took on my machine), the above comman
 
 Transcriptome assembly and variant calling more or less followed the [GATK Best Practices workflow for RNA-seq data](https://www.broadinstitute.org/gatk/guide/article?id=3891) using the following tools:
 
-[STAR](https://github.com/alexdobin/STAR)
-[samtools](http://www.htslib.org/)
-[Picard](https://broadinstitute.github.io/picard/)
-[Genome Analysis Toolkit (GATK)](https://www.broadinstitute.org/gatk/)
+[STAR](https://github.com/alexdobin/STAR) \n
+[samtools](http://www.htslib.org/) \n
+[Picard](https://broadinstitute.github.io/picard/) \n
+[Genome Analysis Toolkit (GATK)](https://www.broadinstitute.org/gatk/) \n
 
 ####First pass read mapping with STAR
 We used STAR's 2-pass method to map reads.  Assuming the genome ([AnoCar2](http://hgdownload.cse.ucsc.edu/goldenPath/anoCar2/bigZips/)) has been downloaded and properly indexed, the first pass with STAR is relatively straightforward.  We used the following template command line (run for each sample):
