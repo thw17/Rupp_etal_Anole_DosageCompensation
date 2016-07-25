@@ -1,0 +1,34 @@
+name: diversity_script
+channels: !!python/object/new:ruamel_yaml.comments.CommentedSeq
+  listitems:
+  - bioconda
+  - defaults
+  state:
+    _yaml_format: !!python/object:ruamel_yaml.comments.Format
+      _flow_style: false
+    _yaml_line_col: !!python/object:ruamel_yaml.comments.LineCol
+      col: 2
+      data:
+        0:
+        - 1
+        - 4
+        1:
+        - 2
+        - 4
+      line: 1
+dependencies:
+- mkl=11.3.3=0
+- mpmath=0.19=py27_1
+- numpy=1.11.1=py27_0
+- openssl=1.0.2h=1
+- pip=8.1.2=py27_0
+- python=2.7.12=1
+- readline=6.2=2
+- setuptools=23.0.0=py27_0
+- sqlite=3.13.0=0
+- sympy=1.0=py27_0
+- tk=8.5.18=0
+- wheel=0.29.0=py27_0
+- zlib=1.2.8=3
+- pip:
+  - cyvcf==0.1.16
