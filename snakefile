@@ -4,15 +4,15 @@
 # 	input:
 # 		"anole_report.html"
 		
-# rule fastq_dump:
-# 	input:
-# 		lambda wildcards: config["sra"][wildcards.sra]
-# 	output:
-# 		"fastqs/{sample}_1.fastq.gz",
-# 		"fastqs/{sample}_2.fastq.gz"
-# 	threads: 1
-# 	shell:
-# 		"fastq-dump --gzip --outdir fastqs --readids --split-files {input}"
+rule fastq_dump:
+	input:
+		lambda wildcards: config["sra"][wildcards.sra]
+	output:
+		"fastqs/{sample}_1.fastq.gz",
+		"fastqs/{sample}_2.fastq.gz"
+	threads: 1
+	shell:
+		"fastq-dump --gzip --outdir fastqs --readids --split-files {input}"
 
 rule download_genome:
 	output:
@@ -30,62 +30,72 @@ rule prep_genome:
 		gtf="reference/AnoCar2.0.85.gtf"
 	output:
 		"reference/AnoCar2.0.fa.fai"
-#	params:
-#		picardPath=config["picard_path"]
+	threads: 4
 	shell:
-		"star --runMode genomeGenerate --genomeDir reference --genomeFastaFiles {input.ref} --sjdbGTFfile {input.gtf} && "
+		"star --runMode genomeGenerate --numThreadN {threads} --genomeDir reference --genomeFastaFiles {input.ref} --sjdbGTFfile {input.gtf} && "
 		"samtools faidx {input.ref} "
-#		"java -Djava.io.tmpdir={params.temp_dir} -jar -Xmx2g {params.picardPath} CreateSequenceDictionary R={input.ref} O=reference/AnoCar2.0.dict"
+		"picard CreateSequenceDictionary R={input.ref} O=reference/AnoCar2.0.dict"
 
-# rule first_pass_map:
-# 	input:
-# 	output:
-# 	threads:
-# 	shell:
-# 	
-# rule second_pass_map:
-# 
-# rule samtools_sort:
-# 	input:
-# 		"mapped_reads/{sample}.bam"
-# 	output:
-# 		temp("mapped_reads/{sample}.sorted.bam")
-# 	threads: 8
-# 	params:
-# 		temp_dir=config["temp_directory"]
-# 	shell:
-# 		"module add java/latest && samtools sort -@ 6 -m 4G -T {params.temp_dir} -O bam {input} > {output}"
-# 		
-# rule add_rg:
-# 	input:
-# 		"mapped_reads/{sample}.sorted.bam"
-# 	output:
-# 		temp("mapped_reads/{sample}.sorted.rg.bam")
-# 	params:
-# 		RGLB="{sample}",
-# 		RGPL="{sample}",
-# 		RGPU="illumina",
-# 		RGSM="{sample}",
-# 		RGID="{sample}",
-# 		temp_dir=config["temp_directory"],
-# 		picardPath=config["picard_path"]
-# 	threads: 1
-# 	shell:
-# 		"module add java/latest && java -Djava.io.tmpdir={params.temp_dir} -jar -Xmx2g {params.picardPath} AddOrReplaceReadGroups INPUT={input} OUTPUT={output} RGLB={params.RGLB} RGPL={params.RGPL} RGPU={params.RGPU} RGSM={params.RGSM} VALIDATION_STRINGENCY=LENIENT"
-# 
-# rule remove_dups:
-# 	input:
-# 		"mapped_reads/{sample}.sorted.rg.bam"
-# 	output:
-# 		protected("processed_bams/{sample}.sorted.rg.nodups.bam")
-# 	params:
-# 		temp_dir=config["temp_directory"],
-# 		picardPath=config["picard_path"],
-# 		metrics="stats/{sample}.picardmetrics"
-# 	threads: 4
-# 	shell:
-# 		"module add java/latest && java -Djava.io.tmpdir={params.temp_dir} -jar -Xmx12g {params.picardPath} MarkDuplicates I={input} O={output} CREATE_INDEX=true VALIDATION_STRINGENCY=LENIENT M={params.metrics}"
-# 
+rule first_pass_map:
+	input:
+		fq1="fastqs/{sample}_1.fastq.gz",
+		fq2="fastqs/{sample}_2.fastq.gz"		
+	output:
+		"star_first_pass/{sample}_SJ.out.tab"
+	threads: 4
+	shell:
+		"star ---numThreadN {threads} --genomeDir reference --readFilesIn {input.fq1} {input.fq2} --outFileNamePrefix star_first_pass/{sample}_"
+	
+rule second_pass_map:
+	input:
+		sjs=expand("star_first_pass/{sample}_SJ.out.tab", sample=config["sra"]),
+		fq1="fastqs/{sample}_1.fastq.gz",
+		fq2="fastqs/{sample}_2.fastq.gz"
+	output:
+		"mapped_reads/{sample}_2ndpass_Aligned.out.bam"
+	threads: 4
+	shell:
+		"star ---numThreadN {threads} --genomeDir reference --readFilesIn {input.fq1} {input.fq2} --outSAMtype BAM Unsorted --outFileNamePrefix mapped_reads/{sample}_2ndpass_ --sjdbFileChrStartEnd {input.sjs}"
+
+rule samtools_sort:
+	input:
+		"mapped_reads/{sample}_2ndpass_Aligned.out.bam"
+	output:
+		temp("mapped_reads/{sample}.sorted.bam")
+	params:
+		temp_dir=config["temp_directory"]
+	threads: 4
+	shell:
+		"samtools sort -T {params.temp_dir} -O bam {input} > {output}"
+		
+rule add_rg:
+	input:
+		"mapped_reads/{sample}.sorted.bam"
+	output:
+		temp("mapped_reads/{sample}.sorted.rg.bam")
+	params:
+		RGLB="{sample}",
+		RGPL="{sample}",
+		RGPU="illumina",
+		RGSM="{sample}",
+		RGID="{sample}",
+		temp_dir=config["temp_directory"],
+	threads: 2
+	shell:
+		"picard AddOrReplaceReadGroups INPUT={input} OUTPUT={output} RGLB={params.RGLB} RGPL={params.RGPL} RGPU={params.RGPU} RGSM={params.RGSM} RGID={params.RGID} VALIDATION_STRINGENCY=LENIENT"
+
+rule remove_dups:
+	input:
+		"mapped_reads/{sample}.sorted.rg.bam"
+	output:
+		"processed_bams/{sample}.sorted.rg.nodups.bam"
+	params:
+		temp_dir=config["temp_directory"],
+		metrics="stats/{sample}.picardmetrics"
+	threads: 4
+	shell:
+		"picard MarkDuplicates I={input} O={output} CREATE_INDEX=true VALIDATION_STRINGENCY=LENIENT M={params.metrics}"
+
 # rule split_n_cigar:
 # 
 # rule call_gvcf:
