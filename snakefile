@@ -16,15 +16,15 @@ rule fastq_dump:
 # 		a=config["samples"]
 # 		lambda wildcards: config["samples"][wildcards.sample]
  	output:
- 		expand("{fq_file}",fq_file=fastq1_list),
- 		expand("{fq_file}",fq_file=fastq2_list)
+ 		expand("fastqs/{fq_file}",fq_file=fastq1_list),
+ 		expand("fastqs/{fq_file}",fq_file=fastq2_list)
 # 	threads: 1
 # 	shell:
 # 		"fastq-dump --gzip --outdir fastqs --readids --split-files {input}"
 	run:
 		for i in config["samples"]:
 			sra = i
-			shell("fastq-dump --gzip --outdir fastqs --readids --split-files {sra}")
+			shell("fastq-dump --gzip --outdir fastqs --readids --split-files --outdir fastqs/ {sra}")
 
 
 rule download_genome:
@@ -61,7 +61,7 @@ rule first_pass_map:
 	
 rule second_pass_map:
 	input:
-		sjs=expand("star_first_pass/{sample}_SJ.out.tab", sample=config["samples"]),
+		sjs=expand("star_first_pass/{sample_list}_SJ.out.tab", sample_list=config["samples"]),
 		fq1="fastqs/{sample}_1.fastq.gz",
 		fq2="fastqs/{sample}_2.fastq.gz"
 	output:
