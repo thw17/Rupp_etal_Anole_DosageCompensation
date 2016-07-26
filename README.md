@@ -51,6 +51,8 @@ For example, our HPC at ASU uses sbatch/slurm and an example command for distrib
 snakemake --snakefile snakefile -j <max number of parallel jobs snakemake can submit> --cluster "sbatch -n <number of cores> -t <time limit> --mail-type=END,FAIL --mail-user=<email address> " --cores <number of cores for the main snakemake process>
 ```
 
+##DETAILED WALKTHROUGH OF ANALYSES
+
 ##Data and samples
 
 The samples for this study consist of RNA-seq data from five biological replicates of regenerating tail tissue each from two male (d15 and d26) and two female (d47 and d61) green anoles (_Anolis carolinensis_) from [Hutchins et al (2014)](http://journals.plos.org/plosone/article?id=10.1371/journal.pone.0105004).  Fastq files associated with this study have been deposited in the SRA under project accession [PRJNA253971](http://www.ncbi.nlm.nih.gov/bioproject/PRJNA253971). Further details on the collection, sequencing, and processing of data can be found in [Hutchins et al (2014)](http://journals.plos.org/plosone/article?id=10.1371/journal.pone.0105004)
