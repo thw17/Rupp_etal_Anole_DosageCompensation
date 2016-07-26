@@ -1,18 +1,31 @@
-# configfile: "anoles.config.json"
-# 
-# rule all:
-# 	input:
-# 		"anole_report.html"
-		
-rule fastq_dump:
+configfile: "anoles.config.json"
+
+fastq1_list = []
+fastq2_list = []
+for i in config["samples"]:
+	fastq1_list.append(i + "_1.fastq.gz")
+	fastq1_list.append(i + "_2.fastq.gz")
+
+
+rule all:
 	input:
-		lambda wildcards: config["sra"][wildcards.sra]
-	output:
-		"fastqs/{sample}_1.fastq.gz",
-		"fastqs/{sample}_2.fastq.gz"
-	threads: 1
-	shell:
-		"fastq-dump --gzip --outdir fastqs --readids --split-files {input}"
+		"anole_report.html"
+		 
+rule fastq_dump:
+# 	input:
+# 		a=config["samples"]
+# 		lambda wildcards: config["samples"][wildcards.sample]
+ 	output:
+ 		expand("{fq_file}",fq_file=fastq1_list),
+ 		expand("{fq_file}",fq_file=fastq2_list)
+# 	threads: 1
+# 	shell:
+# 		"fastq-dump --gzip --outdir fastqs --readids --split-files {input}"
+	run:
+		for i in config["samples"]:
+			sra = i
+			shell("fastq-dump --gzip --outdir fastqs --readids --split-files {sra}")
+
 
 rule download_genome:
 	output:
@@ -48,7 +61,7 @@ rule first_pass_map:
 	
 rule second_pass_map:
 	input:
-		sjs=expand("star_first_pass/{sample}_SJ.out.tab", sample=config["sra"]),
+		sjs=expand("star_first_pass/{sample}_SJ.out.tab", sample=config["samples"]),
 		fq1="fastqs/{sample}_1.fastq.gz",
 		fq2="fastqs/{sample}_2.fastq.gz"
 	output:
@@ -98,7 +111,7 @@ rule remove_dups:
 
 rule split_n_cigar:
 	input:
-		ref="reference/AnoCar2.0.fa"
+		ref="reference/AnoCar2.0.fa",
 		bam="mapped_reads/{sample}.sorted.rg.nodups.bam"
 	output:
 		"processed_bams/{sample}.sorted.rg.nodups.splitcigar.bam"
@@ -111,10 +124,10 @@ rule split_n_cigar:
 
 rule call_gvcf:
 	input:
-		ref="reference/AnoCar2.0.fa"
+		ref="reference/AnoCar2.0.fa",
 		bam="processed_bams/{sample}.sorted.rg.nodups.splitcigar.bam"
 	output:
-		calls/{sample}.g.vcf
+		"calls/{sample}.g.vcf"
 	params:
 		temp_dir=config["temp_directory"],
 		gatk_path=config["GATK"]
@@ -124,13 +137,13 @@ rule call_gvcf:
 
 rule generate_callable_sites:
 	input:
-		ref="reference/AnoCar2.0.fa"
+		ref="reference/AnoCar2.0.fa",
 		bam="processed_bams/{sample}.sorted.rg.nodups.splitcigar.bam"
 	output:
 		"callable_sites/{sample}.callablesites"
 	params:
 		temp_dir=config["temp_directory"],
-		gatk_path=config["GATK"]
+		gatk_path=config["GATK"],
 		summary="stats/{sample}.callable.summary"
 	threads: 4
 	shell:
@@ -146,10 +159,9 @@ rule extract_callable_sites:
 		
 rule find_shared_callable_sites:
 	input:
-		sample_list=lambda wildcards: config["groups"][wildcards.group]
-		beds=expand("callable_sites/{sample}.callablesites", sample=sample_list)
+		beds=expand("callable_sites/{sample}.callablesites", sample=lambda wildcards: config["groups"][wildcards.group])
 	output:
-		callable_sites/{group}.sharedcallable.bed"
+		"callable_sites/{group}.sharedcallable.bed"
 	run:
 		first = input.beds[0]
 		second = input.beds[1]
@@ -160,7 +172,7 @@ rule find_shared_callable_sites:
 			
 rule genotype_gvcfs:
 	input:
-		ref="reference/AnoCar2.0.fa"
+		ref="reference/AnoCar2.0.fa",
 		vcfs=expand("calls/{sample}.g.vcf", sample=lambda wildcards: config["sra"][wildcards.sra])
 	output:
 		"vcf/all_anoles.raw.vcf"
@@ -170,7 +182,7 @@ rule genotype_gvcfs:
 	threads: 4
 	run:
 		for i in input.vcfs:
-			i = "--variant " i
+			i = "--variant " + i
 		shell("java -Xmx12g -Djava.io.tmpdir={params.temp_dir} -jar {params.gatk_path} -T GenotypeGVCFs -R {input.ref} {input.vcfs} -o allsamples_anole.raw.vcf")
 
 rule biallelic_snps:
@@ -184,25 +196,25 @@ rule biallelic_snps:
 # rule diversity_analysis:
 # 	input:
 # 
-# rule report:
-#     input:
-#         "vcf/all_anoles.raw.vcf"
-#     output:
-#         "anole_report.html"
-#     run:
-#         from snakemake.utils import report
-#         with open(input[0]) as vcf:
-#             n_calls = sum(1 for l in vcf if not l.startswith("#"))
-# 
-#         report("""
-#         Anole transcriptome diversity analyses
-#         ===================================
-# 		Pipeline to replicate anole transcriptomic diversity analyses from Rupp et al.
-# 		
-#         Reads were mapped to the AnoCar2
-#         reference genome using STAR (two pass) 
-#         and variants called using GATK.
-# 
-#         This resulted in {n_calls} variants (see Table T1_).
-#         """, output[0], T1=input[0])
-# 	
+rule report:
+    input:
+        "vcf/all_anoles.raw.vcf"
+    output:
+        "anole_report.html"
+    run:
+        from snakemake.utils import report
+        with open(input[0]) as vcf:
+            n_calls = sum(1 for l in vcf if not l.startswith("#"))
+
+        report("""
+        Anole transcriptome diversity analyses
+        ===================================
+		Pipeline to replicate anole transcriptomic diversity analyses from Rupp et al.
+		
+        Reads were mapped to the AnoCar2
+        reference genome using STAR (two pass) 
+        and variants called using GATK.
+
+        This resulted in {n_calls} variants (see Table T1_).
+        """, output[0], T1=input[0])
+	
