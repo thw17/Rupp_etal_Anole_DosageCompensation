@@ -88,7 +88,7 @@ rule remove_dups:
 	input:
 		"mapped_reads/{sample}.sorted.rg.bam"
 	output:
-		"processed_bams/{sample}.sorted.rg.nodups.bam"
+		"mapped_reads/{sample}.sorted.rg.nodups.bam"
 	params:
 		temp_dir=config["temp_directory"],
 		metrics="stats/{sample}.picardmetrics"
@@ -96,32 +96,54 @@ rule remove_dups:
 	shell:
 		"picard MarkDuplicates I={input} O={output} CREATE_INDEX=true VALIDATION_STRINGENCY=LENIENT M={params.metrics}"
 
-# rule split_n_cigar:
-# 
-# rule call_gvcf:
-# 
-# rule generate_callable_sites:
-# 	input:
-# 		"processed_bams/{sample}.sorted.rg.nodups.bam"
-# 	output:
-# 		"callable_sites/{sample}.callablesites"
-# 	params:
-# 		temp_dir=config["temp_directory"]
-# 		GATKPath=config["gatk_path"]
-# 		ref=config["genome_path"]
-# 		summary="stats/{sample}.callable.summary"
-# 	threads: 4
-# 	shell:
-# 		"java -Djava.io.tmpdir={params.temp_dir} -jar -Xmx12g {GATKPath} -T CallableLoci -R {params.ref} -I {input} --summary {summary} -o {output}"
-# 
-# rule extract_callable_sites:
-# 	input:
-# 		"callable_sites/{sample}.callablesites"
-# 	output:
-# 		"callable_sites/{sample}.ONLYcallablesites.bed"
-# 	shell:
-# 		"sed -e '/CALLABLE/!d' {input} > {output}"
-# 		
+rule split_n_cigar:
+	input:
+		ref="reference/AnoCar2.0.fa"
+		bam="mapped_reads/{sample}.sorted.rg.nodups.bam"
+	output:
+		"processed_bams/{sample}.sorted.rg.nodups.splitcigar.bam"
+	threads: 4
+	params:
+		temp_dir=config["temp_directory"],
+		gatk_path=config["GATK"]
+	shell:
+		"java -Xmx12g -Djava.io.tmpdir={params.temp_dir} -jar {params.gatk_path} -T SplitNCigarReads -R {input.ref} -I {input.bam} -o {output} -rf ReassignOneMappingQuality -RMQF 255 -RMQT 60 -U ALLOW_N_CIGAR_READS"
+
+rule call_gvcf:
+	input:
+		ref="reference/AnoCar2.0.fa"
+		bam="processed_bams/{sample}.sorted.rg.nodups.splitcigar.bam"
+	output:
+		calls/{sample}.g.vcf
+	params:
+		temp_dir=config["temp_directory"],
+		gatk_path=config["GATK"]
+	threads: 4
+	shell:
+		"java -Xmx12g -Djava.io.tmpdir={params.temp_dir} -jar {params.gatk_path} -T HaplotypeCaller -R {input.ref} -I {input.bam} -dontUseSoftClippedBases -stand_call_conf 20.0 -stand_emit_conf 20.0 --emitRefConfidence GVCF --variant_index_type LINEAR --variant_index_parameter 128000 -o calls/{sample}.g.vcf"
+
+rule generate_callable_sites:
+	input:
+		ref="reference/AnoCar2.0.fa"
+		bam="processed_bams/{sample}.sorted.rg.nodups.splitcigar.bam"
+	output:
+		"callable_sites/{sample}.callablesites"
+	params:
+		temp_dir=config["temp_directory"],
+		gatk_path=config["GATK"]
+		summary="stats/{sample}.callable.summary"
+	threads: 4
+	shell:
+		"java -Xmx12g -Djava.io.tmpdir={params.temp_dir} -jar {params.gatk_path} -T CallableLoci -R {input.ref} -I {input.bam} --summary {params.summary} -o {output}"
+
+rule extract_callable_sites:
+	input:
+		"callable_sites/{sample}.callablesites"
+	output:
+		"callable_sites/{sample}.ONLYcallablesites.bed"
+	shell:
+		"sed -e '/CALLABLE/!d' {input} > {output}"
+		
 # rule find_shared_callable_sites:
 # 
 # rule genotype_gvcfs:
