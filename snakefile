@@ -144,13 +144,43 @@ rule extract_callable_sites:
 	shell:
 		"sed -e '/CALLABLE/!d' {input} > {output}"
 		
-# rule find_shared_callable_sites:
-# 
-# rule genotype_gvcfs:
-# 	input:
-# 	output:
-# 		"vcf/all_anoles.raw.vcf"
-# 
+rule find_shared_callable_sites:
+	input:
+		sample_list=lambda wildcards: config["groups"][wildcards.group]
+		beds=expand("callable_sites/{sample}.callablesites", sample=sample_list)
+	output:
+		callable_sites/{group}.sharedcallable.bed"
+	run:
+		first = input.beds[0]
+		second = input.beds[1]
+		third = input.beds[2]
+		fourth = input.beds[3]
+		fifth = input.beds[4]
+		shell("bedtools intersect -a {first} -b {second} | bedtools intersect -a stdin -b {third} | bedtools intersect -a stdin -b {fourth} > {output}")
+			
+rule genotype_gvcfs:
+	input:
+		ref="reference/AnoCar2.0.fa"
+		vcfs=expand("calls/{sample}.g.vcf", sample=lambda wildcards: config["sra"][wildcards.sra])
+	output:
+		"vcf/all_anoles.raw.vcf"
+	params:
+		temp_dir=config["temp_directory"],
+		gatk_path=config["GATK"]
+	threads: 4
+	run:
+		for i in input.vcfs:
+			i = "--variant " i
+		shell("java -Xmx12g -Djava.io.tmpdir={params.temp_dir} -jar {params.gatk_path} -T GenotypeGVCFs -R {input.ref} {input.vcfs} -o allsamples_anole.raw.vcf")
+
+rule biallelic_snps:
+	input:
+		"vcf/all_anoles.raw.vcf"
+	output:
+		"vcf/all_anoles.biallelicSNPs.vcf"
+	shell:
+		"bcftools view -m2 -M2 -v snps {input} > {output}"
+
 # rule diversity_analysis:
 # 	input:
 # 
