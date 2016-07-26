@@ -13,7 +13,9 @@ To run the pipeline (has only been tested on Mac and Linux machines):
 1) Clone and then enter this repository:
 ```
 git clone https://github.com/thw17/Rupp_etal_Anole_DosageCompensation
+cd Rupp_etal_Anole_DosageCompensation
 ```
+This repository contains all scripts necessary to reproduce our analyses, as well as the directory structure for the snakemake pipeline.
 
 2) Set up Anaconda environments (one with Python 3 for snakemake and one with Python 2 for the diversity script).  If you don't already have Anaconda installed, it can be obtained free [from here].(https://www.continuum.io/downloads) and you can find more information [here].(http://conda.pydata.org/docs/index.html).  You can alternatively install [Miniconda].(http://conda.pydata.org/docs/install/quick.html), a lightweight version of Anaconda  The following commands assume that anaconda has been successfully installed and is in your PATH (it will do this automatically if you allow it):
 ```
