@@ -1,7 +1,57 @@
 # Anole X/A diversity analyses from Rupp et al.
-##CURRENTLY UNDER CONSTRUCTION (7/17/2016)
+##CURRENTLY UNDER CONSTRUCTION (7/26/2016)
 
 This repository contains scripts and information related to the genetic diversity analyses in Rupp et al (_In review_). Evolution of dosage compensation in _Anolis carolinensis_, a reptile with XX/XY chromosomal sex determination.  Scripts related to other parts of the study (e.g. identifying X-linked scaffolds, differential expression analyses, and Ka/Ks calculations) can be found in [another repository](https://github.com/WilsonSayresLab/Anole_expression).
+
+
+## QUICK START (Note: under construction and does not currently work as of 7/26/2016.  Check back soon)
+
+This section describes the (more or less) push-button replication of the transciptome assembly, variant calling, and diversity analyses from this paper using [snakemake](https://bitbucket.org/snakemake/snakemake/wiki/Home).  Each step in the pipeline is described in greater detail below.
+
+To run the pipeline (has only been tested on Mac and Linux machines):
+
+1) Clone and then enter this repository:
+```
+git clone https://github.com/thw17/Rupp_etal_Anole_DosageCompensation
+cd Rupp_etal_Anole_DosageCompensation
+```
+This repository contains all scripts necessary to reproduce our analyses, as well as the directory structure for the snakemake pipeline.
+
+2) Set up Anaconda environments (one with Python 3 for snakemake and one with Python 2 for the diversity script).  If you don't already have Anaconda installed, it can be obtained free [from here](https://www.continuum.io/downloads) and you can find more information [here](http://conda.pydata.org/docs/index.html).  You can alternatively install [Miniconda](http://conda.pydata.org/docs/install/quick.html), a lightweight version of Anaconda  The following commands assume that anaconda has been successfully installed and is in your PATH (it will do this automatically if you allow it):
+```
+conda config --add channels bioconda
+conda env create -f env/anole_dosage.yml
+conda env create -f env/diversity_script.yml
+```
+
+3) Activate the anole_dosage anaconda environment:
+```
+source activate anole_dosage
+```
+
+3) Download the fastq files from SRA. A straightforward, but somewhat inefficient way to obtain and compress all of the fastq files would be:
+```
+for i in SRR1502164 SRR1502165 SRR1502166 SRR1502167 SRR1502168 SRR1502169 SRR1502170 SRR1502171 SRR1502172 SRR1502173 SRR1502174 SRR1502175 SRR1502176 SRR1502177 SRR1502178 SRR1502179 SRR1502180 SRR1502181 SRR1502182 SRR1502183
+do
+fastq-dump --gzip --outdir fastqs/ --readids --split-files $i
+done
+```
+This can be sped up significantly by running indepentdent, parallel jobs with 1-3 ids each.
+
+4) Edit anoles.config.json with the path to your GATK (if you haven't downloaded it, [you can here](https://software.broadinstitute.org/gatk/download/) ).  We used version 3.6.0), Snpsift (you can download it [here](http://snpeff.sourceforge.net/) ), and where you'd like temporary files to go. 
+
+5) Once all of the fastq files have successfull downloaded, you can run the rest of the pipeline by typing:
+```
+snakemake -s snakefile -c <number of cores>
+```
+Snakemake will distribute jobs across nodes. So to speed up the process, have a look at the [documentation](https://bitbucket.org/snakemake/snakemake/wiki/Documentation) and the [tutorial](http://snakemake.bitbucket.org/snakemake-tutorial.html).
+
+For example, our HPC at ASU uses sbatch/slurm and an example command for distributing the pipeline across multiple jobs looks something like:
+```
+snakemake --snakefile snakefile -j <max number of parallel jobs snakemake can submit> --cluster "sbatch -n <number of cores> -t <time limit> --mail-type=END,FAIL --mail-user=<email address> " --cores <number of cores for the main snakemake process>
+```
+
+##DETAILED WALKTHROUGH OF ANALYSES
 
 ##Data and samples
 
@@ -46,7 +96,7 @@ A straightforward, but somewhat inefficient way to obtain and compress all of th
 ```
 for i in SRR1502164 SRR1502165 SRR1502166 SRR1502167 SRR1502168 SRR1502169 SRR1502170 SRR1502171 SRR1502172 SRR1502173 SRR1502174 SRR1502175 SRR1502176 SRR1502177 SRR1502178 SRR1502179 SRR1502180 SRR1502181 SRR1502182 SRR1502183
 do
-fastq-dump --split-files --gzip $i
+fastq-dump --gzip --outdir <path to output directory> --readids --split-files $i
 done
 ```
 At about 30 minutes per accession (time it took on my machine), the above command would take somewhere around 10 hours to complete.  Alternatively, this can be sped up by splitting the command up into multiple scripts to be run in parallel (e.g., with 2-5 accession numbers at a time).
