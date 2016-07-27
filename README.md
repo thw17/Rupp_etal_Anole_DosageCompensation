@@ -6,7 +6,7 @@ This repository contains scripts and information related to the genetic diversit
 
 ## QUICK START (Note: under construction and does not currently work as of 7/26/2016.  Check back soon)
 
-This section describes the (more or less) push-button replication of the transciptome assembly, variant calling, and diversity analyses from this paper using [snakemake].(https://bitbucket.org/snakemake/snakemake/wiki/Home).  Each step in the pipeline is described in greater detail below.
+This section describes the (more or less) push-button replication of the transciptome assembly, variant calling, and diversity analyses from this paper using [snakemake](https://bitbucket.org/snakemake/snakemake/wiki/Home).  Each step in the pipeline is described in greater detail below.
 
 To run the pipeline (has only been tested on Mac and Linux machines):
 
@@ -17,7 +17,7 @@ cd Rupp_etal_Anole_DosageCompensation
 ```
 This repository contains all scripts necessary to reproduce our analyses, as well as the directory structure for the snakemake pipeline.
 
-2) Set up Anaconda environments (one with Python 3 for snakemake and one with Python 2 for the diversity script).  If you don't already have Anaconda installed, it can be obtained free [from here].(https://www.continuum.io/downloads) and you can find more information [here].(http://conda.pydata.org/docs/index.html).  You can alternatively install [Miniconda].(http://conda.pydata.org/docs/install/quick.html), a lightweight version of Anaconda  The following commands assume that anaconda has been successfully installed and is in your PATH (it will do this automatically if you allow it):
+2) Set up Anaconda environments (one with Python 3 for snakemake and one with Python 2 for the diversity script).  If you don't already have Anaconda installed, it can be obtained free [from here](https://www.continuum.io/downloads) and you can find more information [here](http://conda.pydata.org/docs/index.html).  You can alternatively install [Miniconda](http://conda.pydata.org/docs/install/quick.html), a lightweight version of Anaconda  The following commands assume that anaconda has been successfully installed and is in your PATH (it will do this automatically if you allow it):
 ```
 conda config --add channels bioconda
 conda env create -f env/anole_dosage.yml
@@ -38,13 +38,13 @@ done
 ```
 This can be sped up significantly by running indepentdent, parallel jobs with 1-3 ids each.
 
-4) Edit anoles.config.json with the path to your GATK (if you haven't downloaded it, [you can here].(https://software.broadinstitute.org/gatk/download/) ).  We used version 3.6.0), Snpsift (you can download it [here].(http://snpeff.sourceforge.net/) ), and where you'd like temporary files to go. 
+4) Edit anoles.config.json with the path to your GATK (if you haven't downloaded it, [you can here](https://software.broadinstitute.org/gatk/download/) ).  We used version 3.6.0), Snpsift (you can download it [here](http://snpeff.sourceforge.net/) ), and where you'd like temporary files to go. 
 
 5) Once all of the fastq files have successfull downloaded, you can run the rest of the pipeline by typing:
 ```
 snakemake -s snakefile -c <number of cores>
 ```
-Snakemake will distribute jobs across nodes. So to speed up the process, have a look at the [documentation].(https://bitbucket.org/snakemake/snakemake/wiki/Documentation) and the [tutorial].(http://snakemake.bitbucket.org/snakemake-tutorial.html).
+Snakemake will distribute jobs across nodes. So to speed up the process, have a look at the [documentation](https://bitbucket.org/snakemake/snakemake/wiki/Documentation) and the [tutorial](http://snakemake.bitbucket.org/snakemake-tutorial.html).
 
 For example, our HPC at ASU uses sbatch/slurm and an example command for distributing the pipeline across multiple jobs looks something like:
 ```
