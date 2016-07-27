@@ -38,7 +38,7 @@ done
 ```
 This can be sped up significantly by running indepentdent, parallel jobs with 1-3 ids each.
 
-4) Edit anoles.config.json with the path to your GATK (if you haven't downloaded it, [you can here].(https://software.broadinstitute.org/gatk/download/).  We used version 3.6.0) and where you'd like temporary files to go. 
+4) Edit anoles.config.json with the path to your GATK (if you haven't downloaded it, [you can here].(https://software.broadinstitute.org/gatk/download/).  We used version 3.6.0), Snpsift (you can download it [here].(http://snpeff.sourceforge.net/)), and where you'd like temporary files to go. 
 
 5) Once all of the fastq files have successfull downloaded, you can run the rest of the pipeline by typing:
 ```
