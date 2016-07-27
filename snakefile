@@ -43,7 +43,7 @@ rule prep_genome:
 		gtf="reference/AnoCar2.0.85.gtf"
 	output:
 		"reference/AnoCar2.0.fa.fai"
-	threads: 4
+	threads: 8
 	shell:
 		"STAR --runMode genomeGenerate --runThreadN {threads} --genomeDir reference --genomeFastaFiles {input.ref} --sjdbGTFfile {input.gtf} && "
 		"samtools faidx {input.ref} "
@@ -55,7 +55,7 @@ rule first_pass_map:
 		fq2="fastqs/{sample}_2.fastq.gz"		
 	output:
 		"star_first_pass/{sample}_SJ.out.tab"
-	threads: 4
+	threads: 8
 	shell:
 		"STAR ---runThreadN {threads} --genomeDir reference --readFilesIn {input.fq1} {input.fq2} --outFileNamePrefix star_first_pass/{sample}_"
 	
@@ -66,7 +66,7 @@ rule second_pass_map:
 		fq2="fastqs/{sample}_2.fastq.gz"
 	output:
 		"mapped_reads/{sample}_2ndpass_Aligned.out.bam"
-	threads: 4
+	threads: 8
 	shell:
 		"STAR ---runThreadN {threads} --genomeDir reference --readFilesIn {input.fq1} {input.fq2} --outSAMtype BAM Unsorted --outFileNamePrefix mapped_reads/{sample}_2ndpass_ --sjdbFileChrStartEnd {input.sjs}"
 
