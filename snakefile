@@ -24,7 +24,7 @@ rule fastq_dump:
 	run:
 		for i in config["samples"]:
 			sra = i
-			shell("fastq-dump --gzip --outdir fastqs --readids --split-files --outdir fastqs/ {sra}")
+			shell("fastq-dump --gzip --outdir fastqs --readids --split-files {sra}")
 
 
 rule download_genome:
@@ -185,13 +185,15 @@ rule genotype_gvcfs:
 			i = "--variant " + i
 		shell("java -Xmx12g -Djava.io.tmpdir={params.temp_dir} -jar {params.gatk_path} -T GenotypeGVCFs -R {input.ref} {input.vcfs} -o allsamples_anole.raw.vcf")
 
-rule biallelic_snps:
+rule filter_vcf:
 	input:
 		"vcf/all_anoles.raw.vcf"
 	output:
-		"vcf/all_anoles.biallelicSNPs.vcf"
+		"vcf/all_anoles.biallelicSNPs.QUAL30.sampleDP10.vcf"
+	params:
+		Snpsift_path=config["SnpSift"]
 	shell:
-		"bcftools view -m2 -M2 -v snps {input} > {output}"
+		"bcftools view -m2 -M2 -v snps {input} | java -jar {params.Snpsift_path} filter "(QUAL >= 30) & (GEN[ALL].DP >= 10) > {output}"
 
 # rule diversity_analysis:
 # 	input:
