@@ -191,7 +191,7 @@ rule filter_vcf:
 	output:
 		"vcf/all_anoles.biallelicSNPs.QUAL30.sampleDP10.vcf"
 	params:
-		Snpsift_path=config["SnpSift"]
+		Snpsift_path=config["Snpsift"]
 	shell:
 		"bcftools view -m2 -M2 -v snps {input} | java -jar {params.Snpsift_path} filter '(QUAL >= 30) & (GEN[ALL].DP >= 10)' > {output}"
 
