@@ -45,7 +45,7 @@ rule prep_genome:
 		"reference/AnoCar2.0.fa.fai"
 	threads: 4
 	shell:
-		"STAR --runMode genomeGenerate --numThreadN {threads} --genomeDir reference --genomeFastaFiles {input.ref} --sjdbGTFfile {input.gtf} && "
+		"STAR --runMode genomeGenerate --runThreadN {threads} --genomeDir reference --genomeFastaFiles {input.ref} --sjdbGTFfile {input.gtf} && "
 		"samtools faidx {input.ref} "
 		"picard CreateSequenceDictionary R={input.ref} O=reference/AnoCar2.0.dict"
 
@@ -57,7 +57,7 @@ rule first_pass_map:
 		"star_first_pass/{sample}_SJ.out.tab"
 	threads: 4
 	shell:
-		"STAR ---numThreadN {threads} --genomeDir reference --readFilesIn {input.fq1} {input.fq2} --outFileNamePrefix star_first_pass/{sample}_"
+		"STAR ---runThreadN {threads} --genomeDir reference --readFilesIn {input.fq1} {input.fq2} --outFileNamePrefix star_first_pass/{sample}_"
 	
 rule second_pass_map:
 	input:
@@ -68,7 +68,7 @@ rule second_pass_map:
 		"mapped_reads/{sample}_2ndpass_Aligned.out.bam"
 	threads: 4
 	shell:
-		"STAR ---numThreadN {threads} --genomeDir reference --readFilesIn {input.fq1} {input.fq2} --outSAMtype BAM Unsorted --outFileNamePrefix mapped_reads/{sample}_2ndpass_ --sjdbFileChrStartEnd {input.sjs}"
+		"STAR ---runThreadN {threads} --genomeDir reference --readFilesIn {input.fq1} {input.fq2} --outSAMtype BAM Unsorted --outFileNamePrefix mapped_reads/{sample}_2ndpass_ --sjdbFileChrStartEnd {input.sjs}"
 
 rule samtools_sort:
 	input:
