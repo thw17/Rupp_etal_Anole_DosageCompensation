@@ -1,5 +1,3 @@
-## To-do
-
 
 #############################
 ## Import required modules ##

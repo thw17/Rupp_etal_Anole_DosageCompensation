@@ -11,20 +11,20 @@ rule all:
 	input:
 		"anole_report.html"
 		 
-rule fastq_dump:
-# 	input:
-# 		a=config["samples"]
-# 		lambda wildcards: config["samples"][wildcards.sample]
- 	output:
- 		expand("fastqs/{fq_file}",fq_file=fastq1_list),
- 		expand("fastqs/{fq_file}",fq_file=fastq2_list)
-# 	threads: 1
-# 	shell:
-# 		"fastq-dump --gzip --outdir fastqs --readids --split-files {input}"
-	run:
-		for i in config["samples"]:
-			sra = i
-			shell("fastq-dump --gzip --outdir fastqs --readids --split-files {sra}")
+# rule fastq_dump:
+#  	input:
+#  		a=config["samples"]
+#  		lambda wildcards: config["samples"][wildcards.sample]
+#  	output:
+#  		expand("fastqs/{fq_file}",fq_file=fastq1_list),
+#  		expand("fastqs/{fq_file}",fq_file=fastq2_list)
+#  	threads: 1
+#  	shell:
+#  		"fastq-dump --gzip --outdir fastqs --readids --split-files {input}"
+# 	run:
+# 		for i in config["samples"]:
+# 			sra = i
+# 			shell("fastq-dump --gzip --outdir fastqs --readids --split-files {sra}")
 
 
 rule download_genome:
