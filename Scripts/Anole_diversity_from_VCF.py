@@ -41,6 +41,8 @@ def check_negative(boot_int):
 # Parse the command line
 parser.add_argument("--vcf", required=True, 
 					help="REQUIRED. Input VCF file.  Can be gzipped.")
+parser.add_argument("--outfile", required=True, 
+					help="REQUIRED. Name of output file.  Will overwrite if exists.")
 parser.add_argument("--callable_regions", nargs="*", required=True, 
 					help="REQUIRED. Bed files (no header) containing callable regions for each population (to accurately calculate pi). Order of files must correspond exactly to the order of the population lists")
 parser.add_argument("--bootstrap", default=0, type=check_negative, 
