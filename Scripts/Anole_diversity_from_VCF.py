@@ -355,45 +355,6 @@ print ""
 print "Now computing mean nucleotide diversity using equation from Charlesworth and Charlesworth (2010)"
 print ""
 
-for pop in populations:
-	print ""
-	print "%s: " % pop[1]
-	auto_seq = 0
-	x_seq = 0
-	for i in pop[-1]:
-		if i in x_linked:
-			x_seq += pop[-1][i]
-		else:
-			auto_seq += pop[-1][i]
-	print "Total callable sequence:"
-	print "    Autosomes: %d" % auto_seq
-	print "    X-linked: %d" % x_seq
-	
-	print "Mean autosomal diversity: %f" % (float(np.sum(pop[2][0])) / float(auto_seq))
-	if args.bootstrap > 0:
-		auto_dist = bootstrap_pi_distribution(pop[2][0], auto_seq, args.bootstrap)
-		print "     Bootstrap confidence intervals:"
-		print "          2.5 = %f" % np.percentile(auto_dist, 2.5)
-		print "          Median = %f" % np.percentile(auto_dist,50)
-		print "          97.5 = %f" % np.percentile(auto_dist,97.5)
-	print "Mean X chromosome diversity: %f" % (float(np.sum(pop[3][0])) / float(x_seq))
-	if args.bootstrap > 0:
-		x_dist = bootstrap_pi_distribution(pop[3][0], x_seq, args.bootstrap)
-		print "     Bootstrap confidence intervals:"
-		print "          2.5 = %f" % np.percentile(x_dist, 2.5)
-		print "          Median = %f" % np.percentile(x_dist,50)
-		print "          97.5 = %f" % np.percentile(x_dist,97.5)
-	if args.bootstrap > 0:
-		x_a_dist = np.asarray(x_dist) / np.asarray(auto_dist)
-		print "Mean X/A diversity ratio: %f" % np.mean(x_a_dist)
-		print "     Bootstrap confidence intervals:"
-		print "          2.5 = %f" % np.percentile(x_a_dist, 2.5)
-		print "          Median = %f" % np.percentile(x_a_dist,50)
-		print "          97.5 = %f" % np.percentile(x_a_dist,97.5)
-
-	
-
-
 with open(args.outfile,"w") as f:
 	output_list = [["population","auto_seq","x_seq","auto_mean","auto_2.5","auto_97.5","x_mean","x_2.5","x_97.5","x_a_mean","x_a_2.5","x_a_97.5"]]
 	for pop in populations:
