@@ -1,4 +1,13 @@
 # Ignore everything in this directory
 *
+code_tracking/*
+input_tracking/*
+params_tracking/*
+shadow/*
+version_tracking/*
+incomplete_files/*
+locks/*
+rule_tracking/*
+shellcmd_tracking/*
 # Except this file
 !.gitignore
