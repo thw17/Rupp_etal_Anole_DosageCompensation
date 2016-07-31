@@ -1,0 +1,1 @@
+wget -O reference/AnoCar2.0.fa.gz ftp://ftp.ensembl.org/pub/release-85/fasta/anolis_carolinensis/dna/Anolis_carolinensis.AnoCar2.0.dna.toplevel.fa.gz  && gunzip reference/AnoCar2.0.fa.gz && wget -O reference/AnoCar2.0.85.gtf.gz ftp://ftp.ensembl.org/pub/release-85/gtf/anolis_carolinensis/Anolis_carolinensis.AnoCar2.0.85.gtf.gz && gunzip reference/AnoCar2.0.85.gtf.gz

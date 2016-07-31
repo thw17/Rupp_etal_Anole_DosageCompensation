@@ -90,9 +90,9 @@ with open(args.x_linked_scaffolds,"r") as f:
 		x_linked.remove("")
 
 # Process autosomal scaffolds
-with open(args.x_linked_scaffolds,"r") as f:
+with open(args.autosomal_scaffolds,"r") as f:
 	auto_scaff = [item for sublist in list(csv.reader(f,delimiter="\t")) for item in sublist]
-	auto_scaff = [x.strip() for x in x_linked]
+	auto_scaff = [x.strip() for x in auto_scaff]
 	while "" in auto_scaff:
 		auto_scaff.remove("")
 		
@@ -129,9 +129,9 @@ if args.population_lists != None:
 			temp_pop = [x.strip() for x in temp_pop]
 			while "" in temp_pop:
 				temp_pop.remove("")
-		populations.append([temp_pop,i,[[],[0]],[[],[0]]])
+		populations.append([temp_pop,i,[[],0],[[],0]])
 else:
-	populations = [[vcf_reader.samples,args.vcf,[[],[0]],[[],[0]]]]
+	populations = [[vcf_reader.samples,args.vcf,[[],0],[[],0]]]
 	
 
 
@@ -152,17 +152,22 @@ for idx,i in enumerate(args.callable_regions):
 			if j[0] in callable_dict:
 				callable_dict[j[0]] += int(j[2]) - int(j[1])
 			else:
-				callable_dict[j[0]] = int(j[2]) - int(j[1])
+				if j[0] in auto_scaff:
+					callable_dict[j[0]] = int(j[2]) - int(j[1])
+				elif j[0] in x_linked:
+					callable_dict[j[0]] = int(j[2]) - int(j[1])
 	initial_scaffolds = len(callable_dict)
 	filtered_dict = {k:v for (k,v) in callable_dict.iteritems() if v >= args.scaffold_sites_filter}
 	passing_scaffolds = len(filtered_dict)
 	populations[idx].append(filtered_dict)
+	
 	
 	print "For population corresponding to %s - %s:" % (args.callable_regions[idx], args.population_lists[idx])
 	print "Initial scaffolds: %d" % initial_scaffolds
 	print "Removed scaffolds (not enough sequence coverage): %d" % (initial_scaffolds - passing_scaffolds)
 	print "Remaining scaffolds: %d" % passing_scaffolds
 	print ""
+print populations
 					
 
 ########################################################################
@@ -369,8 +374,8 @@ with open(args.outfile,"w") as f:
 				auto_seq += pop[-1][i]
 		
 		#Adjust callable sequence if any sites were filtered during VCF traversal
-		auto_seq_adj = auto_seq - len(pop[2][1])
-		x_seq_adj = x_seq - len(pop[3][1])
+		auto_seq_adj = auto_seq - pop[2][1]
+		x_seq_adj = x_seq - pop[3][1]
 		
 		temp_line = []
 		
