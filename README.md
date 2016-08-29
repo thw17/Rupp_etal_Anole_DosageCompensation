@@ -39,7 +39,16 @@ done
 ```
 This can be sped up significantly by running indepentdent, parallel jobs with 1-3 ids each.
 
-5) Download the reference genome and create relvant dictionaries and indices.
+5) Download the reference genome into the "reference" directory and create relvant dictionaries and indices.  Note that STAR might require quite a bit of memory to create the reference index (picard and samtools, on the otherhand, will not).
+
+```
+cd reference
+wget ftp://ftp.ensembl.org/pub/release-85/fasta/anolis_carolinensis/dna/Anolis_carolinensis.AnoCar2.0.dna.toplevel.fa.gz
+gunzip AnoCar2.0.fa.gz
+STAR --runMode genomeGenerate --runThreadN {threads} --genomeDir {path/to/reference} --genomeFastaFiles AnoCar2.0.fa
+samtools faidx AnoCar2.0.fa
+picard CreateSequenceDictionary R=AnoCar2.0.fa O=AnoCar2.0.dict
+```
 
 6) Edit anoles.config.json with the path to your GATK (if you haven't downloaded it, [you can here](https://software.broadinstitute.org/gatk/download/) ).  We used version 3.6.0), Snpsift (you can download it [here](http://snpeff.sourceforge.net/) ), and where you'd like temporary files to go. 
 
@@ -127,20 +136,41 @@ sampleSRA=SRAaccessionForSample
 numthread=NumberofThreads
 outdir=/path/to/outdir
 
-$STAR --genomeDir $refdir --readFilesIn "$fastqdir""$sampleSRA"_1.fastq "fastqdir""$sampleSRA"_2.fastq --runThreadN $numthread --outFileNamePrefix "$outdir""$sampleSRA"_
+$STAR --genomeDir $refdir --readFilesIn "$fastqdir""$sampleSRA"_1.fastq "fastqdir""$sampleSRA"_2.fastq --runThreadN $numthread --readFilesCommand zcat --outFileNamePrefix "$outdir""$sampleSRA"_
 ```
 This step will only take a few minutes per sample and primarily serves to identify potential splice junctions across all samples that will be incorporated in the second pass. 
 
 ####Second pass read alignment with STAR
-The second p
+The second pass of STAR is very similar to the first, but will include information about splice junctions identified in the first.  Again, like the first pass, this step will only take a few minutes per sample.
+
+```
+STAR --runThreadN {threads} --genomeDir reference --readFilesIn {input.fq1} {input.fq2} --readFilesCommand zcat --outSAMtype BAM Unsorted --outFileNamePrefix {params.prefix} --sjdbFileChrStartEnd {input.sjs}
+```
 
 ####Bam Processing
+The next series of steps involve processing bam files and include sorting, adding read groups, marking duplicates, and running GATK's "Split N Cigar" tool.
+
+```
+samtools sort -T {params.temp_dir} -O bam {input} > {output}
+picard AddOrReplaceReadGroups INPUT={input} OUTPUT={output} RGLB={params.RGLB} RGPL={params.RGPL} RGPU={params.RGPU} RGSM={params.RGSM} RGID={params.RGID} VALIDATION_STRINGENCY=LENIENT
+picard MarkDuplicates I={input} O={output} CREATE_INDEX=true VALIDATION_STRINGENCY=LENIENT M={params.metrics}
+java -Xmx12g -Djava.io.tmpdir={params.temp_dir} -jar {params.gatk_path} -T SplitNCigarReads -R {input.ref} -I {input.bam} -o {output} -rf ReassignOneMappingQuality -RMQF 255 -RMQT 60 -U ALLOW_N_CIGAR_READS
+```
+
 
 ####Sample variant calling outputting a GVCF
 
+```
+java -Xmx12g -Djava.io.tmpdir={params.temp_dir} -jar {params.gatk_path} -T HaplotypeCaller -R {input.ref} -I {input.bam} -dontUseSoftClippedBases -stand_call_conf 20.0 -stand_emit_conf 20.0 --emitRefConfidence GVCF --variant_index_type LINEAR --variant_index_parameter 128000 -o {output}
+```
+
 ####Joint genotyping all samples
 
+```
+java -Xmx12g -Djava.io.tmpdir={params.temp_dir} -jar {params.gatk_path} -T GenotypeGVCFs -R {input.ref} {input.vcfs} -o allsamples_anole.raw.vcf
 
+bcftools view -m2 -M2 -v snps {input} | java -jar {params.Snpsift_path} filter '(QUAL >= 30) & (MAPQ >= 30) & (DP >= 40)' > {output}
+```
 ##Calculating bootstrapped X/A diversity ratios
 
 
