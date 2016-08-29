@@ -1,10 +1,10 @@
 # Anole X/A diversity analyses from Rupp et al.
-##CURRENTLY UNDER CONSTRUCTION (7/26/2016)
+##CURRENTLY UNDER CONSTRUCTION (8/28/2016)
 
 This repository contains scripts and information related to the genetic diversity analyses in Rupp et al (_In review_). Evolution of dosage compensation in _Anolis carolinensis_, a reptile with XX/XY chromosomal sex determination.  Scripts related to other parts of the study (e.g. identifying X-linked scaffolds, differential expression analyses, and Ka/Ks calculations) can be found in [another repository](https://github.com/WilsonSayresLab/Anole_expression).
 
 
-## QUICK START (Note: under construction and does not currently work as of 7/26/2016.  Check back soon)
+## QUICK START (Note: under construction and does not currently work as of 8/28/2016.  Check back soon)
 
 This section describes the (more or less) push-button replication of the transciptome assembly, variant calling, and diversity analyses from this paper using [snakemake](https://bitbucket.org/snakemake/snakemake/wiki/Home).  Each step in the pipeline is described in greater detail below.
 
@@ -29,8 +29,9 @@ conda env create -f env/diversity_script.yml
 source activate anole_dosage
 ```
 
-3) Download the fastq files from SRA. A straightforward, but somewhat inefficient way to obtain and compress all of the fastq files would be:
+4) Download the fastq files from SRA into the "fastqs" directory. A straightforward, but somewhat inefficient way to obtain and compress all of the fastq files would be:
 ```
+cd fastqs
 for i in SRR1502164 SRR1502165 SRR1502166 SRR1502167 SRR1502168 SRR1502169 SRR1502170 SRR1502171 SRR1502172 SRR1502173 SRR1502174 SRR1502175 SRR1502176 SRR1502177 SRR1502178 SRR1502179 SRR1502180 SRR1502181 SRR1502182 SRR1502183
 do
 fastq-dump --gzip --outdir fastqs/ --readids --split-files $i
@@ -38,9 +39,11 @@ done
 ```
 This can be sped up significantly by running indepentdent, parallel jobs with 1-3 ids each.
 
-4) Edit anoles.config.json with the path to your GATK (if you haven't downloaded it, [you can here](https://software.broadinstitute.org/gatk/download/) ).  We used version 3.6.0), Snpsift (you can download it [here](http://snpeff.sourceforge.net/) ), and where you'd like temporary files to go. 
+5) Download the reference genome and create relvant dictionaries and indices.
 
-5) Once all of the fastq files have successfull downloaded, you can run the rest of the pipeline by typing:
+6) Edit anoles.config.json with the path to your GATK (if you haven't downloaded it, [you can here](https://software.broadinstitute.org/gatk/download/) ).  We used version 3.6.0), Snpsift (you can download it [here](http://snpeff.sourceforge.net/) ), and where you'd like temporary files to go. 
+
+7) Once all of the fastq files have successfull downloaded, you can run the rest of the pipeline by typing:
 ```
 snakemake -s snakefile -c <number of cores>
 ```
