@@ -126,17 +126,10 @@ Transcriptome assembly and variant calling more or less followed the [GATK Best 
 [Genome Analysis Toolkit (GATK)](https://www.broadinstitute.org/gatk/)
 
 ####First pass read mapping with STAR
-We used STAR's 2-pass method to map reads.  Assuming the genome ([AnoCar2](http://hgdownload.cse.ucsc.edu/goldenPath/anoCar2/bigZips/)) has been downloaded and properly indexed, the first pass with STAR is relatively straightforward.  We used the following template command line (run for each sample):
+We used STAR's 2-pass method to map reads.  Assuming the genome ([AnoCar2](ftp://ftp.ensembl.org/pub/release-85/fasta/anolis_carolinensis/dna/Anolis_carolinensis.AnoCar2.0.dna.toplevel.fa.gz)) has been downloaded and properly indexed (see QUICK START above for more information about this), the first pass with STAR is relatively straightforward.  We used the following template command line (run for each sample):
 
 ```
-STAR=/path/to/STAR
-refdir=/path/to/reference/genome
-fastqdir=/path/to/fastq/directory
-sampleSRA=SRAaccessionForSample
-numthread=NumberofThreads
-outdir=/path/to/outdir
-
-$STAR --genomeDir $refdir --readFilesIn "$fastqdir""$sampleSRA"_1.fastq "fastqdir""$sampleSRA"_2.fastq --runThreadN $numthread --readFilesCommand zcat --outFileNamePrefix "$outdir""$sampleSRA"_
+STAR --runThreadN {threads} --genomeDir /path/to/reference/directory --readFilesIn sample_1.fastq sample_2.fastq --readFilesCommand zcat  --outFileNamePrefix sample 
 ```
 This step will only take a few minutes per sample and primarily serves to identify potential splice junctions across all samples that will be incorporated in the second pass. 
 
@@ -144,33 +137,40 @@ This step will only take a few minutes per sample and primarily serves to identi
 The second pass of STAR is very similar to the first, but will include information about splice junctions identified in the first.  Again, like the first pass, this step will only take a few minutes per sample.
 
 ```
-STAR --runThreadN {threads} --genomeDir reference --readFilesIn {input.fq1} {input.fq2} --readFilesCommand zcat --outSAMtype BAM Unsorted --outFileNamePrefix {params.prefix} --sjdbFileChrStartEnd {input.sjs}
+STAR --runThreadN {threads} --genomeDir /path/to/reference/directory --readFilesIn sample_1.fastq sample_2.fastq --readFilesCommand zcat --outSAMtype BAM Unsorted --outFileNamePrefix sample --sjdbFileChrStartEnd list_of_all_sjbd_files
 ```
 
 ####Bam Processing
-The next series of steps involve processing bam files and include sorting, adding read groups, marking duplicates, and running GATK's "Split N Cigar" tool.
+The next series of steps involves processing bam files and includes sorting, adding read groups, marking duplicates, and running GATK's "Split N Cigar" tool.  If we start with the file ```sample.bam```, the commands look something like
 
 ```
-samtools sort -T {params.temp_dir} -O bam {input} > {output}
-picard AddOrReplaceReadGroups INPUT={input} OUTPUT={output} RGLB={params.RGLB} RGPL={params.RGPL} RGPU={params.RGPU} RGSM={params.RGSM} RGID={params.RGID} VALIDATION_STRINGENCY=LENIENT
-picard MarkDuplicates I={input} O={output} CREATE_INDEX=true VALIDATION_STRINGENCY=LENIENT M={params.metrics}
-java -Xmx12g -Djava.io.tmpdir={params.temp_dir} -jar {params.gatk_path} -T SplitNCigarReads -R {input.ref} -I {input.bam} -o {output} -rf ReassignOneMappingQuality -RMQF 255 -RMQT 60 -U ALLOW_N_CIGAR_READS
+samtools sort -T path/to/temp/directory -O bam sample.bam > sample.sorted.bam
+
+picard AddOrReplaceReadGroups INPUT=sample.sorted.bam OUTPUT=sample.sorted.rg.bam RGLB=sample RGPL=sample RGPU=illumina RGSM=sample RGID=sample VALIDATION_STRINGENCY=LENIENT
+
+picard MarkDuplicates I=sample.sorted.rg.bam O=sample.sorted.rg.nodups.bam CREATE_INDEX=true VALIDATION_STRINGENCY=LENIENT M=sample.metrics.txt
+
+java -Xmx12g -Djava.io.tmpdir=/path/to/temp/directory -jar /path/to/GATK.jar -T SplitNCigarReads -R /path/to/AnoCar2.0.fa -I sample.sorted.rg.nodups.bam -o sample.sorted.rg.nodups.splitncigar.bam -rf ReassignOneMappingQuality -RMQF 255 -RMQT 60 -U ALLOW_N_CIGAR_READS
 ```
 
 
 ####Sample variant calling outputting a GVCF
+Then, we can call variants using the full processed bamfile (here, it's ```sample.sorted.rg.nodups.splitncigar.bam```).  We're going to run this separately for each sample to generate a gvcf file for each sample.  This will allow for joint genotyping of all samples later.
 
 ```
-java -Xmx12g -Djava.io.tmpdir={params.temp_dir} -jar {params.gatk_path} -T HaplotypeCaller -R {input.ref} -I {input.bam} -dontUseSoftClippedBases -stand_call_conf 20.0 -stand_emit_conf 20.0 --emitRefConfidence GVCF --variant_index_type LINEAR --variant_index_parameter 128000 -o {output}
+java -Xmx12g -Djava.io.tmpdir=/path/to/temp/directory -jar /path/to/GATK.jar -T HaplotypeCaller -R /path/to/AnoCar2.0.fa -I sample.sorted.rg.nodups.splitncigar.bam -dontUseSoftClippedBases -stand_call_conf 20.0 -stand_emit_conf 20.0 --emitRefConfidence GVCF --variant_index_type LINEAR --variant_index_parameter 128000 -o sample.g.vcf
 ```
 
 ####Joint genotyping all samples
+Once all of the above steps have been run for all samples, we can jointly genotype all samples and then preliminarily filter the vcf using the following commands:
 
 ```
-java -Xmx12g -Djava.io.tmpdir={params.temp_dir} -jar {params.gatk_path} -T GenotypeGVCFs -R {input.ref} {input.vcfs} -o allsamples_anole.raw.vcf
+java -Xmx12g -Djava.io.tmpdir=/path/to/temp/directory -jar /path/to/GATK.jar -T GenotypeGVCFs -R /path/to/AnoCar2.0.fa --variant sample1.g.vcf --variant sample2.g.vcf --variant sample3.g.vcf -o allsamples.raw.vcf
 
-bcftools view -m2 -M2 -v snps {input} | java -jar {params.Snpsift_path} filter '(QUAL >= 30) & (MAPQ >= 30) & (DP >= 40)' > {output}
+bcftools view -m2 -M2 -v snps allsamples.raw.vcf | java -jar /path/to/SnpSift.jar filter '(QUAL >= 30) & (MAPQ >= 30) & (DP >= 40)' > allsamples.biallelicSNPS.QUAL30.MAPQ30.DP40.vcf
 ```
+The first part of the filtering command selects biallelic SNPs only, while the second will only leave sites with QUAL >= 30, MAPQ >= 30, and a total depth >= 40.  Because our diversity ratio calculations will require sites to be callable in all samples within a single replicate, setting the total depth >= 40 will preliminarily remove any site that cannot possibly be included in any replicate.
+
 ##Calculating bootstrapped X/A diversity ratios
 
 
