@@ -167,7 +167,7 @@ Once all of the above steps have been run for all samples, we can jointly genoty
 ```
 java -Xmx12g -Djava.io.tmpdir=/path/to/temp/directory -jar /path/to/GATK.jar -T GenotypeGVCFs -R /path/to/AnoCar2.0.fa --variant sample1.g.vcf --variant sample2.g.vcf --variant sample3.g.vcf -o allsamples.raw.vcf
 
-bcftools view -m2 -M2 -v snps allsamples.raw.vcf | java -jar /path/to/SnpSift.jar filter '(QUAL >= 30) & (MAPQ >= 30) & (DP >= 40)' > allsamples.biallelicSNPS.QUAL30.MAPQ30.DP40.vcf
+bcftools view -m2 -M2 -v snps allsamples.raw.vcf | java -jar /path/to/SnpSift.jar filter '(QUAL >= 30) & (MQ >= 30) & (DP >= 40)' > allsamples.biallelicSNPS.QUAL30.MAPQ30.DP40.vcf
 ```
 The first part of the filtering command selects biallelic SNPs only, while the second will only leave sites with QUAL >= 30, MAPQ >= 30, and a total depth >= 40.  Because our diversity ratio calculations will require sites to be callable in all samples within a single replicate, setting the total depth >= 40 will preliminarily remove any site that cannot possibly be included in any replicate.
 
