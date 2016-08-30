@@ -129,7 +129,7 @@ Transcriptome assembly and variant calling more or less followed the [GATK Best 
 We used STAR's 2-pass method to map reads.  Assuming the genome ([AnoCar2](ftp://ftp.ensembl.org/pub/release-85/fasta/anolis_carolinensis/dna/Anolis_carolinensis.AnoCar2.0.dna.toplevel.fa.gz)) has been downloaded and properly indexed (see QUICK START above for more information about this), the first pass with STAR is relatively straightforward.  We used the following template command line (run for each sample):
 
 ```
-STAR --runThreadN {threads} --genomeDir /path/to/reference/directory --readFilesIn sample_1.fastq sample_2.fastq --readFilesCommand zcat  --outFileNamePrefix sample 
+STAR --runThreadN {threads} --genomeDir /path/to/reference/directory --readFilesIn sample_1.fastq.gz sample_2.fastq.gz --readFilesCommand zcat  --outFileNamePrefix sample 
 ```
 This step will only take a few minutes per sample and primarily serves to identify potential splice junctions across all samples that will be incorporated in the second pass. 
 
@@ -137,7 +137,7 @@ This step will only take a few minutes per sample and primarily serves to identi
 The second pass of STAR is very similar to the first, but will include information about splice junctions identified in the first.  Again, like the first pass, this step will only take a few minutes per sample.
 
 ```
-STAR --runThreadN {threads} --genomeDir /path/to/reference/directory --readFilesIn sample_1.fastq sample_2.fastq --readFilesCommand zcat --outSAMtype BAM Unsorted --outFileNamePrefix sample --sjdbFileChrStartEnd list_of_all_sjbd_files
+STAR --runThreadN {threads} --genomeDir /path/to/reference/directory --readFilesIn sample_1.fastq.gz sample_2.fastq.gz --readFilesCommand zcat --outSAMtype BAM Unsorted --outFileNamePrefix sample --sjdbFileChrStartEnd list_of_all_sjbd_files
 ```
 
 ####Bam Processing
