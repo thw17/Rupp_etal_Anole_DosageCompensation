@@ -1,5 +1,5 @@
 {
-	"Snpsift": "/home/thwebste/Tools/snpEff_v4.2/SnpSift.jar",
-	"GATK": "/home/thwebste/Tools/GenomeAnalysisTK_36.jar",
-	"temp_directory":"/scratch/thwebste/Temp"
+	"Snpsift": "SnpSift.jar",
+	"GATK": "GATK.jar",
+	"temp_directory":"~/Temp"
 }
