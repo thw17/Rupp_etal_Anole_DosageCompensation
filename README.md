@@ -1,10 +1,10 @@
 # Anole X/A diversity analyses from Rupp et al.
-##CURRENTLY UNDER CONSTRUCTION (7/26/2016)
+##CURRENTLY UNDER CONSTRUCTION (8/28/2016)
 
 This repository contains scripts and information related to the genetic diversity analyses in Rupp et al (_In review_). Evolution of dosage compensation in _Anolis carolinensis_, a reptile with XX/XY chromosomal sex determination.  Scripts related to other parts of the study (e.g. identifying X-linked scaffolds, differential expression analyses, and Ka/Ks calculations) can be found in [another repository](https://github.com/WilsonSayresLab/Anole_expression).
 
 
-## QUICK START (Note: under construction and does not currently work as of 7/26/2016.  Check back soon)
+## QUICK START (Note: under construction and does not currently work as of 8/28/2016.  Check back soon)
 
 This section describes the (more or less) push-button replication of the transciptome assembly, variant calling, and diversity analyses from this paper using [snakemake](https://bitbucket.org/snakemake/snakemake/wiki/Home).  Each step in the pipeline is described in greater detail below.
 
@@ -29,8 +29,9 @@ conda env create -f env/diversity_script.yml
 source activate anole_dosage
 ```
 
-3) Download the fastq files from SRA. A straightforward, but somewhat inefficient way to obtain and compress all of the fastq files would be:
+4) Download the fastq files from SRA into the "fastqs" directory. A straightforward, but somewhat inefficient way to obtain and compress all of the fastq files would be:
 ```
+cd fastqs
 for i in SRR1502164 SRR1502165 SRR1502166 SRR1502167 SRR1502168 SRR1502169 SRR1502170 SRR1502171 SRR1502172 SRR1502173 SRR1502174 SRR1502175 SRR1502176 SRR1502177 SRR1502178 SRR1502179 SRR1502180 SRR1502181 SRR1502182 SRR1502183
 do
 fastq-dump --gzip --outdir fastqs/ --readids --split-files $i
@@ -38,9 +39,20 @@ done
 ```
 This can be sped up significantly by running indepentdent, parallel jobs with 1-3 ids each.
 
-4) Edit anoles.config.json with the path to your GATK (if you haven't downloaded it, [you can here](https://software.broadinstitute.org/gatk/download/) ).  We used version 3.6.0), Snpsift (you can download it [here](http://snpeff.sourceforge.net/) ), and where you'd like temporary files to go. 
+5) Download the reference genome into the "reference" directory and create relvant dictionaries and indices.  Note that STAR might require quite a bit of memory to create the reference index (picard and samtools, on the otherhand, will not).
 
-5) Once all of the fastq files have successfull downloaded, you can run the rest of the pipeline by typing:
+```
+cd reference
+wget ftp://ftp.ensembl.org/pub/release-85/fasta/anolis_carolinensis/dna/Anolis_carolinensis.AnoCar2.0.dna.toplevel.fa.gz
+gunzip AnoCar2.0.fa.gz
+STAR --runMode genomeGenerate --runThreadN {threads} --genomeDir {path/to/reference} --genomeFastaFiles AnoCar2.0.fa
+samtools faidx AnoCar2.0.fa
+picard CreateSequenceDictionary R=AnoCar2.0.fa O=AnoCar2.0.dict
+```
+
+6) Edit anoles.config.json with the path to your GATK (if you haven't downloaded it, [you can here](https://software.broadinstitute.org/gatk/download/) ).  We used version 3.6.0), Snpsift (you can download it [here](http://snpeff.sourceforge.net/) ), and where you'd like temporary files to go. 
+
+7) Once all of the fastq files have successfull downloaded, you can run the rest of the pipeline by typing:
 ```
 snakemake -s snakefile -c <number of cores>
 ```
@@ -114,29 +126,50 @@ Transcriptome assembly and variant calling more or less followed the [GATK Best 
 [Genome Analysis Toolkit (GATK)](https://www.broadinstitute.org/gatk/)
 
 ####First pass read mapping with STAR
-We used STAR's 2-pass method to map reads.  Assuming the genome ([AnoCar2](http://hgdownload.cse.ucsc.edu/goldenPath/anoCar2/bigZips/)) has been downloaded and properly indexed, the first pass with STAR is relatively straightforward.  We used the following template command line (run for each sample):
+We used STAR's 2-pass method to map reads.  Assuming the genome ([AnoCar2](ftp://ftp.ensembl.org/pub/release-85/fasta/anolis_carolinensis/dna/Anolis_carolinensis.AnoCar2.0.dna.toplevel.fa.gz)) has been downloaded and properly indexed (see QUICK START above for more information about this), the first pass with STAR is relatively straightforward.  We used the following template command line (run for each sample):
 
 ```
-STAR=/path/to/STAR
-refdir=/path/to/reference/genome
-fastqdir=/path/to/fastq/directory
-sampleSRA=SRAaccessionForSample
-numthread=NumberofThreads
-outdir=/path/to/outdir
-
-$STAR --genomeDir $refdir --readFilesIn "$fastqdir""$sampleSRA"_1.fastq "fastqdir""$sampleSRA"_2.fastq --runThreadN $numthread --outFileNamePrefix "$outdir""$sampleSRA"_
+STAR --runThreadN {threads} --genomeDir /path/to/reference/directory --readFilesIn sample_1.fastq.gz sample_2.fastq.gz --readFilesCommand zcat  --outFileNamePrefix sample 
 ```
 This step will only take a few minutes per sample and primarily serves to identify potential splice junctions across all samples that will be incorporated in the second pass. 
 
 ####Second pass read alignment with STAR
-The second p
+The second pass of STAR is very similar to the first, but will include information about splice junctions identified in the first.  Again, like the first pass, this step will only take a few minutes per sample.
+
+```
+STAR --runThreadN {threads} --genomeDir /path/to/reference/directory --readFilesIn sample_1.fastq.gz sample_2.fastq.gz --readFilesCommand zcat --outSAMtype BAM Unsorted --outFileNamePrefix sample --sjdbFileChrStartEnd list_of_all_sjbd_files
+```
 
 ####Bam Processing
+The next series of steps involves processing bam files and includes sorting, adding read groups, marking duplicates, and running GATK's "Split N Cigar" tool.  If we start with the file ```sample.bam```, the commands look something like
+
+```
+samtools sort -T path/to/temp/directory -O bam sample.bam > sample.sorted.bam
+
+picard AddOrReplaceReadGroups INPUT=sample.sorted.bam OUTPUT=sample.sorted.rg.bam RGLB=sample RGPL=sample RGPU=illumina RGSM=sample RGID=sample VALIDATION_STRINGENCY=LENIENT
+
+picard MarkDuplicates I=sample.sorted.rg.bam O=sample.sorted.rg.nodups.bam CREATE_INDEX=true VALIDATION_STRINGENCY=LENIENT M=sample.metrics.txt
+
+java -Xmx12g -Djava.io.tmpdir=/path/to/temp/directory -jar /path/to/GATK.jar -T SplitNCigarReads -R /path/to/AnoCar2.0.fa -I sample.sorted.rg.nodups.bam -o sample.sorted.rg.nodups.splitncigar.bam -rf ReassignOneMappingQuality -RMQF 255 -RMQT 60 -U ALLOW_N_CIGAR_READS
+```
+
 
 ####Sample variant calling outputting a GVCF
+Then, we can call variants using the full processed bamfile (here, it's ```sample.sorted.rg.nodups.splitncigar.bam```).  We're going to run this separately for each sample to generate a gvcf file for each sample.  This will allow for joint genotyping of all samples later.
+
+```
+java -Xmx12g -Djava.io.tmpdir=/path/to/temp/directory -jar /path/to/GATK.jar -T HaplotypeCaller -R /path/to/AnoCar2.0.fa -I sample.sorted.rg.nodups.splitncigar.bam -dontUseSoftClippedBases -stand_call_conf 20.0 -stand_emit_conf 20.0 --emitRefConfidence GVCF --variant_index_type LINEAR --variant_index_parameter 128000 -o sample.g.vcf
+```
 
 ####Joint genotyping all samples
+Once all of the above steps have been run for all samples, we can jointly genotype all samples and then preliminarily filter the vcf using the following commands:
 
+```
+java -Xmx12g -Djava.io.tmpdir=/path/to/temp/directory -jar /path/to/GATK.jar -T GenotypeGVCFs -R /path/to/AnoCar2.0.fa --variant sample1.g.vcf --variant sample2.g.vcf --variant sample3.g.vcf -o allsamples.raw.vcf
+
+bcftools view -m2 -M2 -v snps allsamples.raw.vcf | java -jar /path/to/SnpSift.jar filter '(QUAL >= 30) & (MQ >= 30) & (DP >= 40)' > allsamples.biallelicSNPS.QUAL30.MAPQ30.DP40.vcf
+```
+The first part of the filtering command selects biallelic SNPs only, while the second will only leave sites with QUAL >= 30, MAPQ >= 30, and a total depth >= 40.  Because our diversity ratio calculations will require sites to be callable in all samples within a single replicate, setting the total depth >= 40 will preliminarily remove any site that cannot possibly be included in any replicate.
 
 ##Calculating bootstrapped X/A diversity ratios
 
