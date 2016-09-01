@@ -55,11 +55,11 @@ picard CreateSequenceDictionary R=AnoCar2.0.fa O=AnoCar2.0.dict
 ```
 snakemake -s snakefile -c <number of cores>
 ```
-Snakemake will distribute jobs across nodes. So to speed up the process, have a look at the [documentation](https://bitbucket.org/snakemake/snakemake/wiki/Documentation) and the [tutorial](http://snakemake.bitbucket.org/snakemake-tutorial.html).
+This command by itself will be pretty inefficient for these analyses because there are 20 different samples that have to be processed.  Fortunately, Snakemake will distribute jobs across nodes. So to speed up the process, have a look at the [documentation](https://bitbucket.org/snakemake/snakemake/wiki/Documentation) and the [tutorial](http://snakemake.bitbucket.org/snakemake-tutorial.html).
 
 For example, our HPC at ASU uses sbatch/slurm and an example command for distributing the pipeline across multiple jobs looks something like:
 ```
-snakemake --snakefile snakefile -j <max number of parallel jobs snakemake can submit> --cluster "sbatch -n <number of cores> -t <time limit> --mail-type=END,FAIL --mail-user=<email address> " --cores <number of cores for the main snakemake process>
+snakemake --snakefile snakefile -j <max number of parallel jobs snakemake can submit> --cluster "sbatch -n <number of cores> --mem=<total memory in mb across all cores> -t <time limit> --mail-type=END,FAIL --mail-user=<email address> " --cores <number of cores for the main snakemake process>
 ```
 
 ##DETAILED WALKTHROUGH OF ANALYSES
