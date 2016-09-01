@@ -1,10 +1,9 @@
 # Anole X/A diversity analyses from Rupp et al.
-##CURRENTLY UNDER CONSTRUCTION (8/28/2016)
 
 This repository contains scripts and information related to the genetic diversity analyses in Rupp et al (_In review_). Evolution of dosage compensation in _Anolis carolinensis_, a reptile with XX/XY chromosomal sex determination.  Scripts related to other parts of the study (e.g. identifying X-linked scaffolds, differential expression analyses, and Ka/Ks calculations) can be found in [another repository](https://github.com/WilsonSayresLab/Anole_expression).
 
 
-## QUICK START (Note: under construction and does not currently work as of 8/28/2016.  Check back soon)
+## QUICK START
 
 This section describes the (more or less) push-button replication of the transciptome assembly, variant calling, and diversity analyses from this paper using [snakemake](https://bitbucket.org/snakemake/snakemake/wiki/Home).  Each step in the pipeline is described in greater detail below.
 
@@ -17,7 +16,7 @@ cd Rupp_etal_Anole_DosageCompensation
 ```
 This repository contains all scripts necessary to reproduce our analyses, as well as the directory structure for the snakemake pipeline.
 
-2) Set up Anaconda environments (one with Python 3 for snakemake and one with Python 2 for the diversity script).  If you don't already have Anaconda installed, it can be obtained free [from here](https://www.continuum.io/downloads) and you can find more information [here](http://conda.pydata.org/docs/index.html).  You can alternatively install [Miniconda](http://conda.pydata.org/docs/install/quick.html), a lightweight version of Anaconda  The following commands assume that anaconda has been successfully installed and is in your PATH (it will do this automatically if you allow it):
+2) Set up Anaconda environments (one with Python 3 for snakemake and one with Python 2 for the diversity script).  If you don't already have Anaconda installed, it can be obtained free [from here](https://www.continuum.io/downloads) and you can find more information [here](http://conda.pydata.org/docs/index.html).  You can alternatively install [Miniconda](http://conda.pydata.org/docs/install/quick.html), a lightweight version of Anaconda.  The following commands assume that anaconda has been successfully installed and is in your PATH (it will do this automatically if you allow it):
 ```
 conda config --add channels bioconda
 conda env create -f env/anole_dosage.yml
@@ -50,7 +49,7 @@ samtools faidx AnoCar2.0.fa
 picard CreateSequenceDictionary R=AnoCar2.0.fa O=AnoCar2.0.dict
 ```
 
-6) Edit anoles.config.json with the path to your GATK (if you haven't downloaded it, [you can here](https://software.broadinstitute.org/gatk/download/) ).  We used version 3.6.0), Snpsift (you can download it [here](http://snpeff.sourceforge.net/) ), and where you'd like temporary files to go. 
+6) Edit anoles.config.json with the path to your GATK (if you haven't downloaded it, [you can here](https://software.broadinstitute.org/gatk/download/) .  We used version 3.5 - other versions will give very slightly different results), Snpsift (you can download it [here](http://snpeff.sourceforge.net/) ; we used version 4.2), and where you'd like temporary files to go. 
 
 7) Once all of the fastq files have successfull downloaded, you can run the rest of the pipeline by typing:
 ```
@@ -172,6 +171,34 @@ bcftools view -m2 -M2 -v snps allsamples.raw.vcf | java -jar /path/to/SnpSift.ja
 The first part of the filtering command selects biallelic SNPs only, while the second will only leave sites with QUAL >= 30, MAPQ >= 30, and a total depth >= 40.  Because our diversity ratio calculations will require sites to be callable in all samples within a single replicate, setting the total depth >= 40 will preliminarily remove any site that cannot possibly be included in any replicate.
 
 ##Calculating bootstrapped X/A diversity ratios
+First, to calculate diversity at all sites, we need information about the number of sites that were callable overall.  This will help give us the number of monomorphic sites in addition to the variant sites in the VCF (monomorphic sites = number of callable sites - number of variant sites).
+
+For each sample, we use GATK's CallableLoci to count the sites callable with a minimum depth of 10 and a minimum mean mapping quality of 30 (these are parameters we'll use on variant sites).  We can then use sed to grab the callable sites only from the output file.
+
+```
+java -jar /path/to/GATK.jar -T CallableLoci -R /path/to/AnoCar2.0.fa -I sample.sorted.rg.nodups.splitncigar.bam --minMappingQuality 30 --minDepth 10 --summary sample.summary -o sample.callablesites
+
+sed -e '/CALLABLE/!d' sample.callablesites > sample.ONLYcallablesites.bed
+```
+
+Then, FOR EACH REPLICATE, we'll find the sites that are callable in all 4 samples with bedtools:
+
+```bedtools intersect -a sample1.ONLYcallablesites.bed -b sample2.ONLYcallablesites.bed | bedtools intersect -a stdin -b sample3.ONLYcallablesites.bed | bedtools intersect -a stdin -b sample4.ONLYcallablesites.bed > replicate1.sharedcallable.bed```
+
+Finally, now that we have our filtered vcf, and bed files containing callable sites for each replicate, we will use ```Anole_diversity_from_VCF.py``` to calculate diversity ratios between X-linked and autosomal sequences, and X-linked and microchromosome sequences.  The flags are fairly self explanatory and the commands used in this pipeline look like:
+```
+source activate diversity_script
+
+python ../scripts/Anole_diversity_from_VCF.py --vcf allsamples.biallelicSNPS.QUAL30.MAPQ30.DP40.vcf --outfile x_autosome_ratios.txt --callable_regions replicate1_callable_loci.bed replicate2_callable_loci.bed replicate3_callable_loci.bed replicate4_callable_loci.bed replicate5_callable_loci.bed --bootstrap 1000 --male_list anole_male_list.txt --population_lists replicate1_pop_ids.txt replicate2_pop_ids.txt replicate3_pop_ids.txt replicate4_pop_ids.txt replicate5_pop_ids.txt --autosomal_scaffolds ../data/autosomes.txt --x_linked_scaffolds x_linked_scaffolds.txt --scaffold_sites_filter 250 --min_cov 10 --QD 2 --FS 30 --QUAL 30 --MAPQ 30
+
+python ../scripts/Anole_diversity_from_VCF.py --vcf allsamples.biallelicSNPS.QUAL30.MAPQ30.DP40.vcf --outfile x_microchromosome_ratio.txt --callable_regions replicate1_callable_loci.bed replicate2_callable_loci.bed replicate3_callable_loci.bed replicate4_callable_loci.bed replicate5_callable_loci.bed --bootstrap 1000 --male_list anole_male_list.txt --population_lists replicate1_pop_ids.txt replicate2_pop_ids.txt replicate3_pop_ids.txt replicate4_pop_ids.txt replicate5_pop_ids.txt --autosomal_scaffolds ../data/microchromsomes_not_x_linked.txt --x_linked_scaffolds x_linked_scaffolds.txt --scaffold_sites_filter 250 --min_cov 10 --QD 2 --FS 30 --QUAL 30 --MAPQ 30
+
+```
+The ```source activate diversity_script``` will load the Python2 environment for the script, so that cyvcf is able to load (required for the script).
+
+Note that in this pipeline, the callable loci bed files will be in the callable sites directory, and the population ids, scaffolds, and male list will be in the data directory.  ```--scaffold_sites_filter``` indicates the minimum number of callable sites required for a scaffold to be included, ```min_cov``` is the minimum depth per sample for it to be included, ```--QD``` is a measure of quality controling for quality inflation that can occur with very deep coverage (minimum), ```--FS``` is the Fisher strand score (maximum), ```--QUAL``` is the (minimum) site quality score, and ```--MAPQ``` is the (minimum) site mapping quality.
+
+Also, note that this diversity script is designed specifically for this pipeline and will only work with VCFs output by GATK (it doesn't work with Freebayes, for instance, because of the different annotation by the two different programs).  I'll be hosting a more general script in another repository later (I'll provide a link here when it's up).
 
 
 
