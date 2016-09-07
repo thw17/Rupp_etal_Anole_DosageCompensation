@@ -42,7 +42,7 @@ This can be sped up significantly by running indepentdent, parallel jobs with 1-
 
 ```
 cd reference
-wget ftp://ftp.ensembl.org/pub/release-85/fasta/anolis_carolinensis/dna/Anolis_carolinensis.AnoCar2.0.dna.toplevel.fa.gz
+wget -O AnoCar2.0.fa.gz ftp://ftp.ensembl.org/pub/release-85/fasta/anolis_carolinensis/dna/Anolis_carolinensis.AnoCar2.0.dna.toplevel.fa.gz
 gunzip AnoCar2.0.fa.gz
 STAR --runMode genomeGenerate --runThreadN {threads} --genomeDir {path/to/reference} --genomeFastaFiles AnoCar2.0.fa
 samtools faidx AnoCar2.0.fa
