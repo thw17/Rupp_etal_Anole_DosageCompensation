@@ -33,7 +33,7 @@ source activate anole_dosage
 cd fastqs
 for i in SRR1502164 SRR1502165 SRR1502166 SRR1502167 SRR1502168 SRR1502169 SRR1502170 SRR1502171 SRR1502172 SRR1502173 SRR1502174 SRR1502175 SRR1502176 SRR1502177 SRR1502178 SRR1502179 SRR1502180 SRR1502181 SRR1502182 SRR1502183
 do
-fastq-dump --gzip --outdir fastqs/ --readids --split-files $i
+fastq-dump --gzip --readids --split-files $i
 done
 ```
 This can be sped up significantly by running indepentdent, parallel jobs with 1-3 ids each.
