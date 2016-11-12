@@ -4,7 +4,7 @@ This repository contains scripts and information related to the genetic diversit
 
 ## Citation
 
-Rupp S; Webster TH; Olney KC; Hutchins ED; Kusumi K; Wilson Sayres MA. In press. Evolution of dosage compensation in Anolis carolinensis, a reptile with XX/XY chromosomal sex determination. Genome Biology and Evolution. [link](http://gbe.oxfordjournals.org/content/early/2016/11/06/gbe.evw263.abstract)
+Rupp S; Webster TH; Olney KC; Hutchins ED; Kusumi K; Wilson Sayres MA. In press. Evolution of dosage compensation in Anolis carolinensis, a reptile with XX/XY chromosomal sex determination. Genome Biology and Evolution. [Link](http://gbe.oxfordjournals.org/content/early/2016/11/06/gbe.evw263.abstract)
 
 
 ## QUICK START
