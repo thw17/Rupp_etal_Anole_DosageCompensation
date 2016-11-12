@@ -1,6 +1,10 @@
 # Anole X/A diversity analyses from Rupp et al.
 
-This repository contains scripts and information related to the genetic diversity analyses in Rupp et al (_In review_). Evolution of dosage compensation in _Anolis carolinensis_, a reptile with XX/XY chromosomal sex determination.  Scripts related to other parts of the study (e.g. identifying X-linked scaffolds, differential expression analyses, and Ka/Ks calculations) can be found in [another repository](https://github.com/WilsonSayresLab/Anole_expression).
+This repository contains scripts and information related to the genetic diversity analyses in [Rupp et al (_In press_)](http://gbe.oxfordjournals.org/content/early/2016/11/06/gbe.evw263.abstract). Evolution of dosage compensation in _Anolis carolinensis_, a reptile with XX/XY chromosomal sex determination.  Scripts related to other parts of the study (e.g. identifying X-linked scaffolds, differential expression analyses, and Ka/Ks calculations) can be found in [another repository](https://github.com/WilsonSayresLab/Anole_expression).
+
+## Citation
+
+Rupp S; Webster TH; Olney KC; Hutchins ED; Kusumi K; Wilson Sayres MA. In press. Evolution of dosage compensation in Anolis carolinensis, a reptile with XX/XY chromosomal sex determination. Genome Biology and Evolution. [link](http://gbe.oxfordjournals.org/content/early/2016/11/06/gbe.evw263.abstract)
 
 
 ## QUICK START
